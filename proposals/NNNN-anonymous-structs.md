@@ -156,7 +156,24 @@ The `$` shorthand is also available:
 [1, 2, 3].fold { [empty = 0] in $0 + $1 }
 ```
 
-#### `callAsFunction` requirements
+#### `mutating` requirements
+
+When the requirement fulfilled by the body is `mutating`, any `var` property captures may be mutated:
+
+```swift
+protocol Foo {
+    associatedtype Bar
+    mutating func update(with value: Bar)
+}
+func bar<F: Foo>(_ foo: F) { ... }
+
+// The body fulfills the `update` requirement
+bar { [var count = 0] (value: Int) in 
+    count += value
+}
+```
+
+#### callAsFunction` requirements
 
 Anonymous structs enable new library designs which use protocols with `callAsFunction` requirements instead of using function types.
 
