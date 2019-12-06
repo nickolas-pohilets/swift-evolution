@@ -9,6 +9,7 @@
 
 This proposal introduces anonymous structs using closure-inspired syntactic sugar as an alternative to a more verbose local struct declaration.  As with closures, trailing syntax is supported.
 
+Swift-evolution pitch thread [Anonymous Structs](https://forums.swift.org/t/anonymous-structs/31424)
 Initial Swift-evolution discussion thread: [Equality Of Functions](https://forums.swift.org/t/equality-of-functions/30295)
 
 ## Motivation
