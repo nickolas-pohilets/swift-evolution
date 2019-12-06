@@ -40,7 +40,7 @@ With trailing anonymous struct syntax, the above example becomes far more clear 
 struct MyView: View {
     var body: some View {
         NavigationLink("Take me there") {
-        		Text("You've made it to the destination")
+            Text("You've made it to the destination")
         }
     }
 }
@@ -62,13 +62,22 @@ let eq: some Equatable = { [x, var y = x + 1] }
 
 // desugars to:
 struct _Anonymous: Equatable { 
-  let x: Int 
-  var y: Int
+    let x: Int 
+    var y: Int
 }
 let eq: some Equatable = _Anonymous(x: x, y: x + 1)
 ```
 
 Note: Because structs are value types and properties are initialized by copy it is not possible for an anonymous struct to implicitly capture a variable by reference in the way that a closure can.
+
+Attributes, including property wrappers, are also supported:
+
+```swift
+let x = 0
+let eq: some Equatable = { [x, @Clamping(min: 0, max: 255) var y = x + 1] }
+```
+
+Access modifiers are not supported.  An instance of an anonymous type is only ever accessed through witness tables so access modifiers would carry no relevant meaning.
 
 ### Bodyless anonymous structs
 
@@ -145,7 +154,7 @@ protocol Monoid {
 }
 extension Sequence {
     func fold<M: Monoid>(_ monoid: M) -> Element
-       where M.Value == Element
+        where M.Value == Element
 }
 [1, 2, 3].fold { [empty = 0] lhs, rhs in lhs + rhs }
 ```
@@ -206,7 +215,7 @@ When the single requirement that must be explicitly fulfilled is a mutable prope
 protocol KeyValueMap {
     associatedtype Key: Hashable
     associatedtype Value
-    
+
     subscript(key: Key) -> Value { get set }
 }
 let map: some KeyValueMap = { [var storage = [Int: Int]()] (key: Int) -> Int in
@@ -296,10 +305,10 @@ closure-parameter-list → closure-parameter | closure-parameter , closure-param
 closure-parameter → closure-parameter-name type-annotation
 closure-parameter-name → identifier
 
-type-closure-list → [ type-closure-list-items ]
-type-closure-list-items → type-closure-list-item | type-closure-list-item , type-closure-list-items
-type-closure-list-item → type-closure-specifier? expression
-type-closure-specifier → var | weak var? | unowned var? | unowned(safe) var? | unowned(unsafe) var?
+type-capture-list → [ type-capture-list-items ]
+type-capture-list-items → type-capture-list-item | type-capture-list-item , type-capture-list-items
+type-capture-list-item → attributes? type-capture-specifier? expression
+type-capture-specifier → var | weak var? | unowned var? | unowned(safe) var? | unowned(unsafe) var?
 
 ```
 
@@ -320,7 +329,7 @@ Both of these change are analogous to the existing support for function closures
 
 ## Source compatibility
 
-This change is additive, however there may be rare cases involving overhead sets where it introduces ambiguity where no ambiguity was previously present.
+This change is additive, however there may be rare cases involving overload sets where it introduces ambiguity where no ambiguity was previously present.
 
 ## Effect on ABI stability
 
