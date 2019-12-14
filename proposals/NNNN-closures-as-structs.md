@@ -47,7 +47,12 @@ protocol Predicate: Hashable {
     func evaluate(_ x: ValueType) -> Bool
 }
 
-func f<P: Predicate>(_ p: Predicate) where P.ValueType == String { ... }
+func f<P: Predicate>(_ p: Predicate) where P.ValueType == String {
+    let value: P.ValueType = ...
+    if p.evaluate(value) {
+        ...
+    }
+}
 
 let expected = "abc"
 
@@ -66,10 +71,14 @@ f(_closure_0001(expected: expected))
 
 ## Detailed design
 
-Protocol is considered to be a single-method protocol, if:
+### Applicability
 
-* it contains exactly one non-static function-like requirement
-* there is exactly one non-static function-like requirement, for which there is no default implementation in the extension and compiler cannot synthesize implementation for that requirement.
+Protocol or combination of protocols is considered to be a single-method protocol, if:
+
+* either it contains exactly one non-static function-like requirement - it does not matter if that requirement can be synthesized by the compiler or if it has a default implementation in the extension.
+* or there is exactly one non-static function-like requirement, which cannot be synthesized by the compiler and has no default implementation provided in the extension.
+
+If closure literal is type-checked against a protocol which is not a singe-method protocol, compilation error is produced.
 
 The following entities are considered to be a function-like requirement:
 
@@ -77,9 +86,35 @@ The following entities are considered to be a function-like requirement:
 * read-only property
 * read-only subscript
 
-Closures as structs are allowed to capture variables only by value. Values captured by reference would need to boxed. Boxing variables affects how compiler synthesises protocol conformance. Automatic boxing may silently produce a behaviour different from what developer expects. If needed, developers still can box captured values manually, being explicit about their intentions.
+### Capture by reference
 
-Proposal does not introduce any changes to the syntax of closures.
+Closures as structs are allowed to capture variables only by value. Attempt to capture value by reference should produce a compilation error.
+
+Values captured by reference would need to boxed. Boxing variables affects how compiler synthesises protocol conformance. Automatic boxing may silently produce a behaviour different from what developer expects. If needed, developers still can box captured values manually, being explicit about their intentions. From the other side, if developers want to capture mutable variable by value, they can use capture list to express this intention.
+
+### Mutating methods
+
+Invoking a closure does not change value of the closure. Closures-as-structs are expected to behave like regular closures, so using closure body to implement mutating function requirement is not allowed. But resulting struct may still have  other mutating methods, if they were synthesized by the compiler or provided by the protocol extension.
+
+### Access control
+
+Currently code in nested structs is allowed to access private members of the enclosing scope. So nested structs and closures are consistent in this behaviour, no changes are required.
+
+Properties synthesized for storing captured values have access level `private`.
+
+### Disambiguating `self` and `Self`.
+
+Whithin the body of the closure-as-struct, `self` and `Self` always refers to the `self` and `Self` from the parent context, and never to the anonymous struct itself. `self` from the outer context is captured in the anonymous struct as property named `self`. When writing equivalent struct manually, one would need to escape name of that property with backticks.
+
+If closure-as-struct adopts any methods from protocol extensions, inside protocol extensions code `self` and `Self` work the same way as they would do for any other struct conforming to this protocol - meaning that they refer to the anonymous struct itself.
+
+### Calling closure-as-struct
+
+For the consuming code, closure-as-struct is seen as a regular struct conforming to a protocol. So, to invoke closure body, one need to invoke corresponding method by name, unless that method is `callAsFunction`, as covered by [SE-0253](https://github.com/apple/swift-evolution/blob/master/proposals/0253-callable.md).
+
+### Syntax changes
+
+Proposal does not introduce any changes to the closure syntax.
 
 ## Source compatibility
 
@@ -113,4 +148,4 @@ Also, for function types as protocols it is natural to expect to be able to manu
 
 ### 3. Allow capturing mutable variables from the context.
 
-As described above, this may lead hard-to-notice bugs. 
+As described above, this may lead to hard-to-notice bugs.
