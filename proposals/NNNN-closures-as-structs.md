@@ -31,6 +31,8 @@ In contrast to closures, structs can conform to additional protocols. If protoco
 
 Callable structs can be handled as generic types, rather then being packed into existential containers. This eliminates need for heap allocation in performance-critical code.
 
+Callable structs can be used to implement generic function type (`<T> (T) -> T`), which currently cannot be expressed for regular closures.
+
 Also, structs can be easily mirrored, while currently Swift does not provide mirroring capabilities for closures, and existing design of closure metadata make some cases of closures not inspectible even by SwiftRemoteMirror.
 
 But implementing closure-like structs by hand is a tedious work, which requires a lot of boilerplate code to capture the context, and introduces a name that is often of dubious value.
